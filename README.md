@@ -8,7 +8,7 @@ This repository provides the core logic for multi-window traversal, fake window,
 
 ## 主要特性 | Features
 - 多窗口穿梭与交互逻辑
-- 假窗口（自定义标题栏、拖拽、嵌入等）
+- 假标题（自定义标题栏、拖拽、嵌入等）
 - 默认窗口（无边框、嵌入锚点、拉伸、移动限制等）
 - 代码注释详细，便于理解和扩展
 
