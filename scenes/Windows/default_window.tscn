@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://c71q1jijlnj3a"]
+
+[ext_resource type="Script" uid="uid://faq4aabonqir" path="res://scenes/Windows/default_window.gd" id="1_626wo"]
+
+[node name="Window" type="Window"]
+disable_3d = true
+oversampling_override = 1.0
+title = "另一个窗口"
+position = Vector2i(266, 129)
+size = Vector2i(440, 220)
+borderless = true
+minimize_disabled = true
+maximize_disabled = true
+min_size = Vector2i(100, 100)
+content_scale_mode = 1
+content_scale_aspect = 4
+script = ExtResource("1_626wo")
+fixed_enabled = false

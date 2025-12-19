@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3 uid="uid://crfmn6sp14ivx"]
+
+[ext_resource type="Script" uid="uid://b3b4q0qbtnxsa" path="res://scenes/Windows/fake_title.gd" id="1_gyc2d"]
+[ext_resource type="Texture2D" uid="uid://kh026nuka6qr" path="res://icon.svg" id="2_igt7u"]
+
+[node name="FakeTitle" type="Control"]
+z_index = 4096
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_gyc2d")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.9529412, 0.9529412, 0.9529412, 1)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Icon" type="TextureRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("2_igt7u")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="HBoxContainer"]
+modulate = Color(0.12941177, 0.14901961, 0.18039216, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Window"
+
+[node name="Close" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(32, 24)
+layout_mode = 2
+text = "✕"

@@ -1,0 +1,51 @@
+[gd_scene load_steps=6 format=3 uid="uid://db660mnd26uup"]
+
+[ext_resource type="PackedScene" uid="uid://csfye7dt2ri6c" path="res://scenes/Characters/player.tscn" id="1_0em8i"]
+[ext_resource type="PackedScene" uid="uid://cmm2f3b4fns7m" path="res://scenes/Windows/transition_windows_parents.tscn" id="2_qujpd"]
+[ext_resource type="PackedScene" uid="uid://c71q1jijlnj3a" path="res://scenes/Windows/default_window.tscn" id="3_48vr1"]
+[ext_resource type="Script" uid="uid://iu1m02g0qi1w" path="res://camera_2d.gd" id="4_qujpd"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_gq7yc"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 1920.0
+offset_bottom = 1080.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2(0, 1080)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+shape = SubResource("WorldBoundaryShape2D_gq7yc")
+
+[node name="Player" parent="." instance=ExtResource("1_0em8i")]
+
+[node name="TransitionWindowsManager" parent="." instance=ExtResource("2_qujpd")]
+
+[node name="Window" parent="TransitionWindowsManager" instance=ExtResource("3_48vr1")]
+position = Vector2i(311, 129)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="TransitionWindowsManager/Window"]
+position = Vector2(0, 213)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionWindowsManager/Window/StaticBody2D"]
+shape = SubResource("WorldBoundaryShape2D_gq7yc")
+
+[node name="Window2" parent="TransitionWindowsManager" instance=ExtResource("3_48vr1")]
+position = Vector2i(1026, 129)
+priority = 1
+
+[node name="StaticBody2D" type="StaticBody2D" parent="TransitionWindowsManager/Window2"]
+position = Vector2(0, 213)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionWindowsManager/Window2/StaticBody2D"]
+shape = SubResource("WorldBoundaryShape2D_gq7yc")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("4_qujpd")
