@@ -1,0 +1,156 @@
+[gd_scene load_steps=11 format=3 uid="uid://b8cqtt0ydpl30"]
+
+[ext_resource type="PackedScene" uid="uid://cmm2f3b4fns7m" path="res://Windows/transition_windows_manager.tscn" id="1_fj7yv"]
+[ext_resource type="PackedScene" uid="uid://c71q1jijlnj3a" path="res://Windows/default_window.tscn" id="2_tlwt5"]
+[ext_resource type="PackedScene" uid="uid://x2nipjbd5peb" path="res://Windows/transient_window.tscn" id="3_dwbse"]
+[ext_resource type="Script" uid="uid://bbslwkwqn1omg" path="res://camera_game.gd" id="3_ioo17"]
+[ext_resource type="Script" uid="uid://q82oytkkr4ub" path="res://transient_button.gd" id="3_pkg7o"]
+[ext_resource type="PackedScene" uid="uid://d3ojwl07opmjj" path="res://player.tscn" id="3_tlwt5"]
+[ext_resource type="Script" uid="uid://dqm6dcq0wt3ig" path="res://popup_button.gd" id="4_aqk2v"]
+[ext_resource type="PackedScene" uid="uid://dh44aod522ymh" path="res://Windows/popup_window.tscn" id="5_036b0"]
+[ext_resource type="Script" uid="uid://iu1m02g0qi1w" path="res://camera_2d.gd" id="9_wse8f"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_fj7yv"]
+
+[node name="world" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(0, 1080)
+shape = SubResource("WorldBoundaryShape2D_fj7yv")
+
+[node name="Player" parent="." instance=ExtResource("3_tlwt5")]
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -182.5
+offset_top = -78.0
+offset_right = 182.5
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 51
+text = "生成弹出式窗口"
+script = ExtResource("4_aqk2v")
+popup_window_scene = ExtResource("5_036b0")
+
+[node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("player")]
+script = ExtResource("9_wse8f")
+player = NodePath("../Player")
+
+[node name="TransitionWindowsManager" parent="." instance=ExtResource("1_fj7yv")]
+proxy_overlap_min_ratio = 0.1
+debug_enabled = false
+safe_rect_ratio = 0.2
+
+[node name="DefaultWindow" parent="TransitionWindowsManager" instance=ExtResource("2_tlwt5")]
+
+[node name="CameraGame" type="Control" parent="TransitionWindowsManager/DefaultWindow"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_ioo17")
+
+[node name="ColorRect" type="ColorRect" parent="TransitionWindowsManager/DefaultWindow/CameraGame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Button" type="Button" parent="TransitionWindowsManager/DefaultWindow/CameraGame"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -4.0
+offset_top = -4.0
+offset_right = 4.0
+offset_bottom = 4.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 36
+text = "弹出临时窗口"
+script = ExtResource("3_pkg7o")
+
+[node name="TransientWindow" parent="TransitionWindowsManager/DefaultWindow" instance=ExtResource("3_dwbse")]
+unique_name_in_owner = true
+position = Vector2i(786, 559)
+visible = false
+close_behavior = "hide"
+
+[node name="Control" type="Control" parent="TransitionWindowsManager/DefaultWindow/TransientWindow"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="TransitionWindowsManager/DefaultWindow/TransientWindow/Control"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -156.0
+offset_top = -15.5
+offset_right = 156.0
+offset_bottom = 15.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 25
+text = "我是临时窗口
+会阻挡生成我的窗口的点击"
+
+[node name="Camera2D" type="Camera2D" parent="TransitionWindowsManager/DefaultWindow"]
+limit_left = 0
+limit_top = 0
+script = ExtResource("9_wse8f")
+in_sub_window = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_colors/font_outline_color = Color(1, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_font_sizes/font_size = 51
+text = "最新的多窗口系统，有效的支持了窗口内相机
+可以用鼠标右键点击窗口拟态嵌入
+临时和弹出窗口目前都适配
+可以按下Q键在玩家面前生成子窗口
+需要关闭项目设置的嵌入式窗口"
+
+[connection signal="pressed" from="Button" to="Button" method="_on_pressed"]
+[connection signal="pressed" from="TransitionWindowsManager/DefaultWindow/CameraGame/Button" to="TransitionWindowsManager/DefaultWindow/CameraGame/Button" method="_on_pressed"]

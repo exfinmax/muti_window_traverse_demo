@@ -1,0 +1,24 @@
+[gd_resource type="Theme" load_steps=5 format=3 uid="uid://bvhsvci8fr287"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2nojw"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ols5k"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_biaja"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vnc4k"]
+
+[resource]
+Button/font_sizes/font_size = 30
+Label/font_sizes/font_size = 24
+LineEdit/colors/caret_color = Color(0.10872064, 0.10872077, 0.1087211, 1)
+LineEdit/colors/font_color = Color(0, 0, 0, 1)
+LineEdit/font_sizes/font_size = 30
+LineEdit/styles/focus = SubResource("StyleBoxEmpty_2nojw")
+LineEdit/styles/normal = SubResource("StyleBoxEmpty_ols5k")
+PopupMenu/font_sizes/font_size = 24
+TextEdit/colors/caret_color = Color(0, 0, 0, 1)
+TextEdit/colors/font_color = Color(0, 0, 0, 1)
+TextEdit/font_sizes/font_size = 30
+TextEdit/styles/focus = SubResource("StyleBoxEmpty_biaja")
+TextEdit/styles/normal = SubResource("StyleBoxEmpty_vnc4k")

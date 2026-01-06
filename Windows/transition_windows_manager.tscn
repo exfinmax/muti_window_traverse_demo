@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmm2f3b4fns7m"]
+
+[ext_resource type="Script" uid="uid://c0wr7nkm46w34" path="res://scenes/Windows/transition_window_manager.gd" id="1_qtlok"]
+
+[node name="TransitionWindowsManager" type="Node2D"]
+script = ExtResource("1_qtlok")
+proxy_overlap_min_ratio = 0.3
+debug_enabled = true

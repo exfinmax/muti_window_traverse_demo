@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://x2nipjbd5peb"]
+
+[ext_resource type="Script" uid="uid://bb8jmfkawtbrm" path="res://Windows/transient_window.gd" id="1_w4ehc"]
+
+[node name="TransientWindow" type="Window"]
+disable_3d = true
+oversampling_override = 1.0
+title = "另一个窗口"
+position = Vector2i(266, 129)
+size = Vector2i(440, 220)
+transient = true
+exclusive = true
+borderless = true
+minimize_disabled = true
+maximize_disabled = true
+min_size = Vector2i(100, 100)
+content_scale_mode = 1
+content_scale_aspect = 4
+script = ExtResource("1_w4ehc")

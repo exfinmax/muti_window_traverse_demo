@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://dr6rghucd20i3"]
+
+[ext_resource type="Shader" uid="uid://dhfb5fg3uhfms" path="res://resources/shader/card_dissolve.gdshader" id="1_oqib5"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_oqib5"]
+
+[resource]
+shader = ExtResource("1_oqib5")
+shader_parameter/progress = -1.1
+shader_parameter/noiseForce = 0.2
+shader_parameter/noiseTexture = SubResource("NoiseTexture2D_oqib5")
+shader_parameter/burnColor = Color(0.99215686, 0.99215686, 0.3529412, 1)
+shader_parameter/borderWidth = 0.155
+shader_parameter/direction = 270.0

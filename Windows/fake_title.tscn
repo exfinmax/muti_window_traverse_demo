@@ -1,0 +1,79 @@
+[gd_scene load_steps=6 format=3 uid="uid://crfmn6sp14ivx"]
+
+[ext_resource type="Script" uid="uid://b3b4q0qbtnxsa" path="res://Windows/fake_title.gd" id="1_gyc2d"]
+[ext_resource type="Texture2D" uid="uid://ct5xuk3ekhw3u" path="res://assets/icon/empty_file.png" id="2_qnxqo"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_igt7u"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_eae1w"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.7529412, 0, 0, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cksfn"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(1, 1, 1, 0.26666668)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+corner_detail = 5
+
+[node name="FakeTitle" type="Control"]
+z_index = 4096
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_gyc2d")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.8117647, 0.8627451, 0.9254902, 1)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 36.0
+grow_horizontal = 2
+
+[node name="Icon" type="TextureRect" parent="HBoxContainer"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("2_qnxqo")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="HBoxContainer"]
+modulate = Color(0.12941177, 0.14901961, 0.18039216, 1)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Window"
+
+[node name="Close" type="Button" parent="HBoxContainer"]
+custom_minimum_size = Vector2(32, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.15727374, 0.1572741, 0.15727377, 1)
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxEmpty_igt7u")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_eae1w")
+theme_override_styles/hover = SubResource("StyleBoxFlat_cksfn")
+theme_override_styles/focus = SubResource("StyleBoxFlat_eae1w")
+text = "✕"

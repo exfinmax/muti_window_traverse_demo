@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://dh44aod522ymh"]
+
+[ext_resource type="Script" uid="uid://181ye6gctoeo" path="res://Windows/popup_window.gd" id="1_73qf4"]
+
+[node name="PopupWindow" type="Window"]
+disable_3d = true
+oversampling_override = 1.0
+title = "另一个窗口"
+position = Vector2i(266, 129)
+size = Vector2i(440, 220)
+borderless = true
+popup_window = true
+popup_wm_hint = true
+minimize_disabled = true
+maximize_disabled = true
+min_size = Vector2i(100, 100)
+content_scale_mode = 1
+content_scale_aspect = 4
+script = ExtResource("1_73qf4")
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -11.5
+offset_right = 20.0
+offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 31
+text = "我是弹出式窗口
+点外面就会自动关闭"
+horizontal_alignment = 1
