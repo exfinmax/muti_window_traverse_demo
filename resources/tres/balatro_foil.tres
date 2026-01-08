@@ -1,8 +1,0 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://b564eq6e6t4uy"]
-
-[ext_resource type="Shader" uid="uid://dj4r3h4uhs0lk" path="res://resources/shader/balatro_foil.gdshader" id="1_4ic48"]
-
-[resource]
-shader = ExtResource("1_4ic48")
-shader_parameter/offset = Vector2(0, 0)
-shader_parameter/speed = 1.0

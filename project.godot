@@ -19,7 +19,7 @@ config/icon="uid://ct5xuk3ekhw3u"
 
 [audio]
 
-buses/default_bus_layout="res://resources/default_bus_layout.tres"
+buses/default_bus_layout=""
 
 [autoload]
 
@@ -46,10 +46,6 @@ enabled=PackedStringArray()
 [global_group]
 
 portal_travelers="可穿越窗口的节点"
-
-[gui]
-
-theme/custom="uid://bvhsvci8fr287"
 
 [gui_transitions]
 
