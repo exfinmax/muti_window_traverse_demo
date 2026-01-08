@@ -6,6 +6,7 @@ var initial_pos: Vector2i
 var is_closing: bool = false
 
 func _ready() -> void:
+	popup_wm_hint = true
 	super._ready()
 	
 	var mgr = get_tree().get_first_node_in_group("window_manager")

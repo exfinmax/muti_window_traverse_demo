@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://b8cqtt0ydpl30"]
+[gd_scene load_steps=12 format=3 uid="uid://b8cqtt0ydpl30"]
 
 [ext_resource type="PackedScene" uid="uid://cmm2f3b4fns7m" path="res://Windows/transition_windows_manager.tscn" id="1_fj7yv"]
 [ext_resource type="PackedScene" uid="uid://c71q1jijlnj3a" path="res://Windows/default_window.tscn" id="2_tlwt5"]
@@ -11,6 +11,10 @@
 [ext_resource type="Script" uid="uid://iu1m02g0qi1w" path="res://camera_2d.gd" id="9_wse8f"]
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_fj7yv"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ioo17"]
+particle_flag_disable_z = true
+gravity = Vector3(0, 98, 0)
 
 [node name="world" type="Control"]
 layout_mode = 3
@@ -46,6 +50,7 @@ script = ExtResource("4_aqk2v")
 popup_window_scene = ExtResource("5_036b0")
 
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("player")]
+offset = Vector2(90, 0)
 script = ExtResource("9_wse8f")
 player = NodePath("../Player")
 
@@ -97,6 +102,7 @@ unique_name_in_owner = true
 position = Vector2i(786, 559)
 visible = false
 close_behavior = "hide"
+border_mode = "原生边框"
 
 [node name="Control" type="Control" parent="TransitionWindowsManager/DefaultWindow/TransientWindow"]
 layout_mode = 3
@@ -151,6 +157,9 @@ text = "最新的多窗口系统，有效的支持了窗口内相机
 临时和弹出窗口目前都适配
 可以按下Q键在玩家面前生成子窗口
 需要关闭项目设置的嵌入式窗口"
+
+[node name="GPUParticles2D" type="GPUParticles2D" parent="."]
+process_material = SubResource("ParticleProcessMaterial_ioo17")
 
 [connection signal="pressed" from="Button" to="Button" method="_on_pressed"]
 [connection signal="pressed" from="TransitionWindowsManager/DefaultWindow/CameraGame/Button" to="TransitionWindowsManager/DefaultWindow/CameraGame/Button" method="_on_pressed"]

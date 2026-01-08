@@ -105,6 +105,18 @@ signal all_travelers_exited(win: Window)  ## 所有穿越者退出后发射
 @export_group("移动限制")
 @export var has_movement_bounds: bool = false ##是否启用区域限制(需要开启假边框)
 @export var movement_bounds: Rect2 = Rect2()  ##相对屏幕坐标的限制矩形，position 与 size 分量范围 [0,1]
+@export_group("速度系统")
+@export var initailize_velocity:Vector2 ##初始速度
+@export_range(0,1,.01) var rebound_attenyatuin:float ##反弹速度衰减率
+@export var max_rebound_count:int = -1 ##最大反弹次数，超过次数再触碰到边界就会速度为0固定住，小于0则为无限
+@export var damping:float ##阻尼大小
+@export var directional_speed: float = 0.0 ##直线速度
+@export var directional_direction: Vector2 = Vector2.ZERO ##直线速度方向
+@export var orbit_speed: float = 0.0 ##环绕速度
+@export var radius: float = 300.0 ## 半径（可以调整）
+@export var radial_speed: float = 0.0 ##径向速度
+@export var orbit_center_pos: Vector2 ## 环绕速度的中心屏幕位置
+@export var max_speed: float = 2000.0 ##最大速度长度
 
 @export_group("DEBUG")
 @export var debug: bool
@@ -130,7 +142,6 @@ var _enter_count: int = 0 ##被进入次数
 var _travelers_inside: Array = [] ##在里面的穿越者
 var _inside_time_left: float = 0.0 ##剩余可待时间
 var _transition_rect: ColorRect ##演示色块
-var _title_overlay: ColorRect
 var _embed_elapsed_total: float = 0.0
 var _embed_locked_out: bool = false
 var _last_camera_pos: Vector2 = Vector2.ZERO
@@ -139,7 +150,6 @@ var _anchor_world_pos: Vector2 = Vector2.ZERO
 var _anchor_node: Node2D = null
 var _camera_buffer_left: float = 0.0
 var _embed_lock_elapsed: float = 0.0
-var _drag_active: bool = false
 var _last_valid_pos: Vector2 = Vector2.ZERO
  
 
@@ -175,6 +185,10 @@ var _is_playing_enter_animation: bool = false  # 标记是否正在播放进入�
 var _custom_traversable: bool = true  # 自定义穿越条件，默认为 true（允许穿越）
 var _custom_exit_allowed: bool = true  # 自定义退出条件，默认为 true（允许退出）
 
+var _bound_count:int = 0
+var _linear_velocity: Vector2 = Vector2.ZERO
+var _bounce_frozen: bool = false
+
 func _get_screen_size() -> Vector2:
 	# 使用当前屏幕的物理尺寸，确保相对坐标针对电脑屏幕而非主窗口视口
 	var win := get_window()
@@ -182,7 +196,7 @@ func _get_screen_size() -> Vector2:
 	var s := DisplayServer.screen_get_size(screen_id)
 	return Vector2(s)
 
-
+#region 初始化方法
 func _ready() -> void:
 	# 记录创建时的初始可见性，供管理器决定是否自动显示
 	_initially_visible = visible
@@ -203,8 +217,9 @@ func _ready() -> void:
 	match border_mode:
 		"原生边框":
 			# 原生窗口：有系统边框，允许拉伸
-			borderless = false
-			unresizable = false
+			if popup_wm_hint == false:
+				borderless = false
+				unresizable = false
 		"假边框":
 			# 假边框：无系统边框，创建假标题和拉伸句柄
 			borderless = true
@@ -255,6 +270,9 @@ func _ready() -> void:
 		await get_tree().process_frame
 		_play_enter_animation()
 
+	# 初始化线性速度
+	_linear_velocity = Vector2(initailize_velocity)
+
 func _initialize_components() -> void:
 	"""初始化所有窗口组件"""
 	for script in component_scripts:
@@ -279,6 +297,38 @@ func _create_anchor_node() -> void:
 	_anchor_node.global_position = Vector2(position)
 	_anchor_world_pos = Vector2(position)
 
+func _create_side_boundaries() -> void:
+	"""创建窗口的左、右、上三个边界（默认禁用）"""
+	# 创建左边界
+	if _window_left == null or not is_instance_valid(_window_left):
+		_window_left = WINDOW_BOTTEM.instantiate()
+		_window_left.name = "WindowLeft"
+		_window_left.rotation = deg_to_rad(90)  # 旋转90度使其垂直
+		add_child(_window_left)
+		_window_left.process_mode = Node.PROCESS_MODE_DISABLED
+		DebugHelper.log("[DefaultWindow] 已创建左边界（默认禁用）")
+	
+	# 创建右边界
+	if _window_right == null or not is_instance_valid(_window_right):
+		_window_right = WINDOW_BOTTEM.instantiate()
+		_window_right.name = "WindowRight"
+		_window_right.rotation = deg_to_rad(-90)  # 旋转-90度使其垂直
+		add_child(_window_right)
+		_window_right.process_mode = Node.PROCESS_MODE_DISABLED
+		DebugHelper.log("[DefaultWindow] 已创建右边界（默认禁用）")
+	
+	# 创建上边界
+	if _window_top == null or not is_instance_valid(_window_top):
+		_window_top = WINDOW_BOTTEM.instantiate()
+		_window_top.name = "WindowTop"
+		_window_top.rotation = deg_to_rad(180)  # 旋转180度使其朝下
+		add_child(_window_top)
+		_window_top.process_mode = Node.PROCESS_MODE_DISABLED
+		DebugHelper.log("[DefaultWindow] 已创建上边界（默认禁用）")
+	
+	# 初始化边界位置
+	_update_side_boundaries()
+#endregion
 
 func _process(delta: float) -> void:
 	var cam := _get_camera()
@@ -342,6 +392,7 @@ func _process(delta: float) -> void:
 	_last_valid_pos = Vector2(position)
 
 	# 不在此处进行边界贴近/夹取逻辑，避免窗口移动被强制限制
+	move_with_velocity(delta)
 
 	# 在窗口内的计时逻辑（多穿越者共享倒计时）
 	if inside_time_limit > 0.0 and not _travelers_inside.is_empty():
@@ -395,6 +446,194 @@ func _prune_invalid_travelers() -> void:
 			alive.append(t)
 	_travelers_inside = alive
 
+#region 速度相关方法
+func _calculate_param_velocity(current_position: Vector2) -> Vector2:
+	var v := Vector2.ZERO
+	# Directional
+	if directional_direction != Vector2.ZERO and directional_speed != 0.0:
+		v += directional_direction.normalized() * directional_speed
+	# Orbit + Radial（环绕 + 径向）
+	if orbit_speed != 0 or radial_speed != 0:
+		var radius_vec = current_position - orbit_center_pos
+		var current_radius = radius_vec.length()
+		if current_radius > 0.001:
+			var radial_dir = radius_vec.normalized()
+			var tangent_dir = radial_dir.orthogonal()
+			# 环绕速度（切线方向）
+			v += tangent_dir * orbit_speed
+			# 径向速度：如果设置了 radius，添加向心/离心调节力
+			if radius > 0.0:
+				# 计算偏离目标半径的量，施加温和的恢复力避免卡住
+				var radius_error = current_radius - radius
+				# 使用更小的弹性系数和平方根衰减，避免过度矫正
+				var error_sign = sign(radius_error)
+				var error_magnitude = abs(radius_error)
+				# 平方根衰减使得靠近目标时恢复力更温和
+				var restore_force = -error_sign * sqrt(error_magnitude) * 0.2
+				v += radial_dir * (radial_speed + restore_force)
+			else:
+				v += radial_dir * radial_speed
+	return v
+
+
+func move_with_velocity(delta: float) -> void:
+	if _bounce_frozen:
+		return
+
+	# 根据嵌入状态选择当前位置：嵌入时用锚点世界坐标，非嵌入时用窗口屏幕坐标
+	var current_pos: Vector2
+	if pinned_to_screen and _anchor_node != null and is_instance_valid(_anchor_node):
+		current_pos = _anchor_node.global_position
+	else:
+		current_pos = Vector2(self.position)
+
+	# 计算参数化速度分量（方向/环绕/径向），线性速度使用持久量
+	var param_v := _calculate_param_velocity(current_pos)
+
+	# 合成总速度并对整体做阻尼（而不是只阻尼线性部分）
+	var v_total := _linear_velocity + param_v
+	if damping > 0.0:
+		v_total = v_total.move_toward(Vector2.ZERO, damping * delta)
+	# 阻尼后回写线性分量，保持下帧连贯
+	_linear_velocity = v_total - param_v
+
+	# 限速（在阻尼之后执行）
+	if v_total.length() > max_speed:
+		v_total = v_total.normalized() * max_speed
+
+	var predicted := current_pos + v_total * delta
+	var screen_size: Vector2 = _get_screen_size()
+
+	# 计算有效边界（全屏或限制矩形）
+	var bound_left := 0.0
+	var bound_top := 0.0
+	var bound_right := screen_size.x
+	var bound_bottom := screen_size.y
+	if has_movement_bounds:
+		var abs_min: Vector2 = movement_bounds.position * screen_size
+		var abs_size: Vector2 = movement_bounds.size * screen_size
+		bound_left = abs_min.x
+		bound_top = abs_min.y
+		bound_right = abs_min.x + abs_size.x
+		bound_bottom = abs_min.y + abs_size.y
+
+	# 边界检测：任一角越界即发生碰撞
+	var hit_left: bool = predicted.x < bound_left
+	var hit_right: bool = predicted.x + size.x > bound_right
+	var hit_top: bool = predicted.y < bound_top
+	var hit_bottom: bool = predicted.y + size.y > bound_bottom
+	var collided: bool = hit_left or hit_right or hit_top or hit_bottom
+
+	if collided:
+		# 反弹次数为 0 时表示禁用反弹/冻结，直接夹到边界后继续保持原速度
+		if max_rebound_count == 0:
+			predicted.x = clamp(predicted.x, bound_left, max(bound_left, bound_right - size.x))
+			predicted.y = clamp(predicted.y, bound_top, max(bound_top, bound_bottom - size.y))
+			# 仍然允许后续同步锚点和最终位置更新
+		else:
+			# 若达到最大反弹次数（>=0 有效），再次触边则冻结
+			if max_rebound_count >= 0 and _bound_count >= max_rebound_count:
+				_linear_velocity = Vector2.ZERO
+				_bounce_frozen = true
+				# 将窗口夹到屏幕内
+				predicted.x = clamp(predicted.x, bound_left, max(bound_left, bound_right - size.x))
+				predicted.y = clamp(predicted.y, bound_top, max(bound_top, bound_bottom - size.y))
+				self.position = predicted.round()
+				# 冻结时保持锚点一致
+				if pinned_to_screen and _anchor_node != null and is_instance_valid(_anchor_node):
+					var cam := _get_camera()
+					if cam != null:
+						var viewport_size := Vector2(cam.get_viewport().size)
+						var world_pos := Vector2(self.position) + cam.global_position - viewport_size / 2.0
+						_anchor_node.global_position = world_pos
+						_anchor_world_pos = world_pos
+					else:
+						_anchor_node.global_position = Vector2(self.position)
+						_anchor_world_pos = Vector2(self.position)
+				return
+
+			# 反弹：沿命中边的法线反射当前总速度
+			var collision_normal := Vector2.ZERO
+			if hit_left:
+				collision_normal.x = 1.0
+				predicted.x = bound_left
+			elif hit_right:
+				collision_normal.x = -1.0
+				predicted.x = bound_right - size.x
+			if hit_top:
+				collision_normal.y = 1.0
+				predicted.y = bound_top
+			elif hit_bottom:
+				collision_normal.y = -1.0
+				predicted.y = bound_bottom - size.y
+
+			if collision_normal != Vector2.ZERO:
+				v_total = v_total.bounce(collision_normal.normalized())
+				# 反弹速度衰减（0..1，越大衰减越强）
+				var atten: float = clamp(1.0 - rebound_attenyatuin, 0.0, 1.0)
+				v_total *= atten
+				_linear_velocity = v_total - param_v
+				_bound_count += 1
+
+	# 确保位置仍在允许范围内
+	predicted.x = clamp(predicted.x, bound_left, max(bound_left, bound_right - size.x))
+	predicted.y = clamp(predicted.y, bound_top, max(bound_top, bound_bottom - size.y))
+
+	# 根据嵌入状态更新位置：嵌入时更新锚点世界坐标，非嵌入时更新窗口屏幕坐标
+	if pinned_to_screen and _anchor_node != null and is_instance_valid(_anchor_node):
+		# 嵌入模式：直接更新锚点的世界坐标，_process 会自动将其映射到窗口屏幕位置
+		_anchor_node.global_position = predicted
+		_anchor_world_pos = predicted
+	else:
+		# 非嵌入模式：直接更新窗口屏幕坐标
+		self.position = predicted.round()
+		# 同步锚点跟随窗口位置
+		if _anchor_node != null and is_instance_valid(_anchor_node):
+			var cam2 := _get_camera()
+			if cam2 != null:
+				var viewport_size2 := Vector2(cam2.get_viewport().size)
+				var world_pos2 := Vector2(self.position) + cam2.global_position - viewport_size2 / 2.0
+				_anchor_node.global_position = world_pos2
+				_anchor_world_pos = world_pos2
+			else:
+				_anchor_node.global_position = Vector2(self.position)
+				_anchor_world_pos = Vector2(self.position)
+
+
+## 设置速度参数（直接应用，会重置对应值）
+## velocity: 新的线性速度（Vector2），传 null 则不修改
+## new_damping: 新的阻尼值（float），传负数则不修改
+## new_max_rebound: 新的最大反弹次数（int），传 null 则不修改
+## reset_bounce_count: 是否重置当前反弹计数（bool，默认 false）
+## unfreeze: 是否解除冻结状态（bool，默认 false）
+func set_velocity_params(
+	velocity: Variant = null,
+	new_damping: float = -1.0,
+	new_max_rebound: Variant = null,
+	reset_bounce_count: bool = false,
+	unfreeze: bool = false
+) -> void:
+	if velocity != null and velocity is Vector2:
+		_linear_velocity = velocity
+	if new_damping >= 0.0:
+		damping = new_damping
+	if new_max_rebound != null and new_max_rebound is int:
+		max_rebound_count = new_max_rebound
+	if reset_bounce_count:
+		_bound_count = 0
+	if unfreeze:
+		_bounce_frozen = false
+
+## 在当前线性速度基础上增加或减去速度增量（适合持续加速/减速）
+## delta_velocity: 速度增量（Vector2）
+## clamp_to_max: 是否限制到 max_speed（bool，默认 true）
+func add_velocity(delta_velocity: Vector2, clamp_to_max: bool = true) -> void:
+	_linear_velocity += delta_velocity
+	if clamp_to_max and _linear_velocity.length() > max_speed:
+		_linear_velocity = _linear_velocity.normalized() * max_speed
+
+#endregion
+
 func _unhandled_input(event: InputEvent) -> void:
 	# 右键切换嵌入
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed() and can_embed:
@@ -407,7 +646,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	# 全局鼠标左键松开时，重置标题拖拽状态，避免多次拖拽起点错乱
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.is_pressed():
 		_title_dragging_active = false
-		_drag_active = false
 
 func _push_out_of_safe_rect() -> void:
 	var screen_size := _get_screen_size()
@@ -561,10 +799,6 @@ func _register_traveler_exit(traveler: Node) -> void:
 		if typeof(d) == TYPE_FLOAT or typeof(d) == TYPE_INT:
 			_camera_buffer_left = float(d)
 
-
-
-# 已移除测试用数字键嵌入逻辑
-
 func _get_camera() -> Camera2D:
 	var wm = get_parent()
 	if wm and wm.has_meta("camera_ref"):
@@ -657,44 +891,9 @@ func _update_window_bottem() -> void:
 		return
 	_window_bottem.position = Vector2(0, size.y - 2)
 
-func remove_window_bottem() -> void:
-	"""删除窗口底部条（供外部调用）"""
-	if _window_bottem != null and is_instance_valid(_window_bottem):
-		_window_bottem.queue_free()
-		_window_bottem = null
-		DebugHelper.log("[DefaultWindow] 已删除窗口底部条")
 
-func _create_side_boundaries() -> void:
-	"""创建窗口的左、右、上三个边界（默认禁用）"""
-	# 创建左边界
-	if _window_left == null or not is_instance_valid(_window_left):
-		_window_left = WINDOW_BOTTEM.instantiate()
-		_window_left.name = "WindowLeft"
-		_window_left.rotation = deg_to_rad(90)  # 旋转90度使其垂直
-		add_child(_window_left)
-		_window_left.process_mode = Node.PROCESS_MODE_DISABLED
-		DebugHelper.log("[DefaultWindow] 已创建左边界（默认禁用）")
-	
-	# 创建右边界
-	if _window_right == null or not is_instance_valid(_window_right):
-		_window_right = WINDOW_BOTTEM.instantiate()
-		_window_right.name = "WindowRight"
-		_window_right.rotation = deg_to_rad(-90)  # 旋转-90度使其垂直
-		add_child(_window_right)
-		_window_right.process_mode = Node.PROCESS_MODE_DISABLED
-		DebugHelper.log("[DefaultWindow] 已创建右边界（默认禁用）")
-	
-	# 创建上边界
-	if _window_top == null or not is_instance_valid(_window_top):
-		_window_top = WINDOW_BOTTEM.instantiate()
-		_window_top.name = "WindowTop"
-		_window_top.rotation = deg_to_rad(180)  # 旋转180度使其朝下
-		add_child(_window_top)
-		_window_top.process_mode = Node.PROCESS_MODE_DISABLED
-		DebugHelper.log("[DefaultWindow] 已创建上边界（默认禁用）")
-	
-	# 初始化边界位置
-	_update_side_boundaries()
+
+
 
 func _update_side_boundaries() -> void:
 	"""更新窗口边界的位置和大小"""
@@ -709,6 +908,14 @@ func _update_side_boundaries() -> void:
 	# 更新上边界
 	if _window_top != null and is_instance_valid(_window_top):
 		_window_top.position = Vector2(0, 2)
+
+#region 供给外部调用方法
+func remove_window_bottem() -> void:
+	"""删除窗口底部条（供外部调用）"""
+	if _window_bottem != null and is_instance_valid(_window_bottem):
+		_window_bottem.queue_free()
+		_window_bottem = null
+		DebugHelper.log("[DefaultWindow] 已删除窗口底部条")
 
 func set_side_boundaries_enabled(enabled: bool) -> void:
 	"""启用或禁用窗口的左、右、上三个边界（供外部调用）
@@ -791,6 +998,26 @@ func has_travelers_inside() -> bool:
 	_prune_invalid_travelers()
 	return not _travelers_inside.is_empty()
 
+# 供管理器判定嵌入状态的接口
+func is_window_embedded() -> bool:
+	return pinned_to_screen
+
+
+
+func is_traversable() -> bool:
+	"""检查窗口是否可以穿越
+	- 进入动画播放期间不可穿越
+	- 自定义条件为 false 时不可穿越
+	"""
+	return not _is_playing_enter_animation and _custom_traversable
+
+func is_exit_allowed() -> bool:
+	"""检查是否允许从窗口内部退出
+	- 自定义条件为 false 时不允许退出
+	"""
+	return _custom_exit_allowed
+
+#endregion
 
 func _update_status_ui() -> void:
 	if _status_label == null:
@@ -807,9 +1034,7 @@ func _update_status_ui() -> void:
 	var cam_buf := _camera_buffer_left
 	_status_label.text = "状态: %s\n嵌入剩余: %.1fs\n内停剩余: %.1fs\n相机缓冲剩余: %.1fs\n已进入: %d\n嵌入次数余: %s" % [embed_state, time_left, inside_left, cam_buf, _enter_count, attempts_str]
 
-# 供管理器判定嵌入状态的接口
-func is_window_embedded() -> bool:
-	return pinned_to_screen
+
 
 func _notify_manager_close() -> void:
 	# 通知组件窗口即将关闭
@@ -1040,10 +1265,7 @@ func _update_fake_title_layout() -> void:
 	# 维持标题宽度与窗口一致，贴合顶部
 	_fake_title.size = Vector2(size.x, _title_height)
 	_fake_title.position = Vector2.ZERO
-	# 主题淡入遮罩尺寸同步
-	if _title_overlay != null:
-		_title_overlay.position = Vector2.ZERO
-		_title_overlay.size = Vector2(size.x, max(1.0, _title_height))
+
 	# 状态标签保持在标题下方
 	if _status_label != null:
 		_status_label.position = Vector2(8, 8 + _content_offset)
@@ -1418,19 +1640,6 @@ func _stabilize_visibility_deferred() -> void:
 
 
 
-func is_traversable() -> bool:
-	"""检查窗口是否可以穿越
-	- 进入动画播放期间不可穿越
-	- 自定义条件为 false 时不可穿越
-	"""
-	return not _is_playing_enter_animation and _custom_traversable
-
-func is_exit_allowed() -> bool:
-	"""检查是否允许从窗口内部退出
-	- 自定义条件为 false 时不允许退出
-	"""
-	return _custom_exit_allowed
-
 #region ========== 窗口动画系统 ==========
 
 func _play_enter_animation() -> void:
@@ -1594,7 +1803,7 @@ func _reset_to_initial_state() -> void:
 
 
 
-func _update_centered_position(t: float, center: Vector2, original_size: Vector2) -> void:
+func _update_centered_position(_t: float, center: Vector2, _original_size: Vector2) -> void:
 	"""更新窗口位置以保持中心点不变（用于缩放动画）"""
 	var current_size = Vector2(size)
 	var new_pos = center - current_size / 2.0
@@ -1653,9 +1862,6 @@ func resize(
 	else:
 		actual_center = center_point
 	
-	# 记录当前状态
-	var current_size = Vector2(size)
-	var current_pos = Vector2(position)
 	
 	# 计算新位置以保持中心点固定
 	var new_pos = actual_center - Vector2(new_size) / 2.0
